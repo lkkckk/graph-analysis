@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="情报研判系统 - 基于图数据的可视化分析平台">
+  <title>情报研判系统 - 图数据分析平台</title>
+
+  <!-- 字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- 图标 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- vis.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/dist/vis-network.min.js"></script>
+
+  <!-- 样式 -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- ==================== 导航栏 ==================== -->
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <i class="fas fa-project-diagram"></i>
+        <span>情报研判系统</span>
+      </div>
+
+      <ul class="navbar-nav">
+        <li>
+          <a href="#" class="nav-link active" data-page="dashboard">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>仪表盘</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-page="import">
+            <i class="fas fa-upload"></i>
+            <span>数据导入</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-page="graph">
+            <i class="fas fa-diagram-project"></i>
+            <span>图谱分析</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-page="analysis">
+            <i class="fas fa-magnifying-glass-chart"></i>
+            <span>研判工具</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="navbar-status">
+        <div id="status-dot" class="status-dot"></div>
+        <span id="status-text">检测中...</span>
+      </div>
+    </nav>
+
+    <!-- ==================== 主内容区 ==================== -->
+    <main class="main-content">
+
+      <!-- ========== 仪表盘 ========== -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <h1 class="page-title">系统概览</h1>
+          <p class="page-subtitle">实时监控图数据库状态和统计信息</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon nodes">
+              <i class="fas fa-circle-nodes"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-nodes">0</h3>
+              <p>总节点数</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon edges">
+              <i class="fas fa-link"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-edges">0</h3>
+              <p>总关系数</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon phone">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-phones">0</h3>
+              <p>电话节点</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon wechat">
+              <i class="fab fa-weixin"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-wechat">0</h3>
+              <p>微信节点</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-rocket"></i> 快速开始</span>
+            </div>
+            <p style="margin-bottom: 16px; color: var(--text-secondary);">
+              导入数据后即可开始分析。支持 CSV、Excel 格式的话单和微信数据。
+            </p>
+            <button class="btn btn-primary" onclick="app.switchPage('import')">
+              <i class="fas fa-upload"></i> 导入数据
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-tools"></i> 分析工具</span>
+            </div>
+            <p style="margin-bottom: 16px; color: var(--text-secondary);">
+              提供 8 种图分析算法：共同联系人、最短路径、社区发现等。
+            </p>
+            <button class="btn btn-secondary" onclick="app.switchPage('analysis')">
+              <i class="fas fa-chart-network"></i> 开始分析
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fas fa-sync"></i> 操作</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" onclick="app.refresh()">
+                <i class="fas fa-refresh"></i> 刷新数据
+              </button>
+              <a href="http://localhost:7474" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-external-link-alt"></i> Neo4j
+              </a>
+              <a href="http://localhost:8000/docs" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-book"></i> API 文档
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 数据导入 ========== -->
+      <div id="page-import" class="page">
+        <div class="page-header">
+          <h1 class="page-title">数据导入</h1>
+          <p class="page-subtitle">上传话单或微信数据文件，支持 CSV 和 Excel 格式</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-file-upload"></i> 文件上传</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">数据类型</label>
+            <select id="upload-data-type" class="form-control form-select" style="max-width: 300px;">
+              <option value="auto">🔍 自动识别</option>
+              <option value="contacts">📱 手机通讯录</option>
+              <option value="wechat">💬 微信好友</option>
+              <option value="cdr">📞 话单数据 (CDR)</option>
+            </select>
+          </div>
+
+          <div id="upload-zone" class="upload-zone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h4>拖拽文件到此处，或点击选择文件</h4>
+            <p>支持 .csv, .xlsx, .xls 格式</p>
+          </div>
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display: none;">
+
+          <div id="upload-result"></div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-info-circle"></i> 格式说明</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <div>
+              <h4 style="color: var(--accent-primary); margin-bottom: 8px;">
+                <i class="fas fa-mobile-alt"></i> 手机通讯录格式
+              </h4>
+              <table class="result-table">
+                <tr>
+                  <th>字段</th>
+                  <th>说明</th>
+                </tr>
+                <tr>
+                  <td>姓名</td>
+                  <td>联系人姓名 *</td>
+                </tr>
+                <tr>
+                  <td>电话号码</td>
+                  <td>联系人电话 *</td>
+                </tr>
+                <tr>
+                  <td>备注</td>
+                  <td>备注（可选）</td>
+                </tr>
+              </table>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                💡 文件名格式: <code>张三_手机通讯录.xlsx</code>
+              </p>
+            </div>
+
+            <div>
+              <h4 style="color: var(--accent-success); margin-bottom: 8px;">
+                <i class="fab fa-weixin"></i> 微信好友格式
+              </h4>
+              <table class="result-table">
+                <tr>
+                  <th>字段</th>
+                  <th>说明</th>
+                </tr>
+                <tr>
+                  <td>微信ID</td>
+                  <td>好友微信ID *</td>
+                </tr>
+                <tr>
+                  <td>微信昵称</td>
+                  <td>好友昵称（可选）</td>
+                </tr>
+                <tr>
+                  <td>备注</td>
+                  <td>备注（可选）</td>
+                </tr>
+              </table>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                💡 文件名格式: <code>张三_微信好友.xlsx</code>
+              </p>
+            </div>
+
+            <div>
+              <h4 style="color: var(--accent-warning); margin-bottom: 8px;">
+                <i class="fas fa-phone"></i> 话单数据格式
+              </h4>
+              <table class="result-table">
+                <tr>
+                  <th>字段</th>
+                  <th>说明</th>
+                </tr>
+                <tr>
+                  <td>主叫/caller</td>
+                  <td>主叫号码 *</td>
+                </tr>
+                <tr>
+                  <td>被叫/callee</td>
+                  <td>被叫号码 *</td>
+                </tr>
+                <tr>
+                  <td>通话时长</td>
+                  <td>时长秒（可选）</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+            <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">
+              <i class="fas fa-magic" style="color: var(--accent-primary);"></i>
+              <strong>智能识别：</strong>系统会根据列名和文件名自动识别数据类型，支持中英文列名。
+            </p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-trash-alt"></i> 危险操作</span>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            清空数据库将删除所有节点和关系，此操作不可恢复。
+          </p>
+          <button class="btn btn-danger" onclick="app.clearAllData()">
+            <i class="fas fa-trash"></i> 清空所有数据
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== 图谱分析 ========== -->
+      <div id="page-graph" class="page">
+        <div class="page-header">
+          <h1 class="page-title">图谱可视化</h1>
+          <p class="page-subtitle">交互式网络关系图，点击节点查看详情</p>
+        </div>
+
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <div
+            style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <div class="search-box" style="margin: 0; flex: 1; min-width: 200px;">
+              <input type="text" id="graph-search" placeholder="搜索节点 ID..."
+                onkeypress="if(event.key==='Enter') app.searchNode()">
+              <i class="fas fa-search"></i>
+            </div>
+            <button class="btn btn-secondary" onclick="app.searchNode()">
+              <i class="fas fa-search"></i> 搜索
+            </button>
+            <button class="btn btn-secondary" onclick="graphModule.fit()">
+              <i class="fas fa-expand-arrows-alt"></i> 适应
+            </button>
+            <button class="btn btn-secondary" onclick="graphModule.zoom('in')">
+              <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="btn btn-secondary" onclick="graphModule.zoom('out')">
+              <i class="fas fa-search-minus"></i>
+            </button>
+          </div>
+
+          <div class="graph-container">
+            <div id="graph-canvas"></div>
+
+            <div id="node-detail-panel" class="node-detail-panel">
+              <h4><i class="fas fa-info-circle"></i> 节点详情</h4>
+              <p><strong>ID:</strong> <span id="detail-node-id">-</span></p>
+              <p><strong>类型:</strong> <span id="detail-node-type">-</span></p>
+            </div>
+
+            <div class="graph-legend">
+              <div class="legend-item">
+                <span class="legend-dot phone"></span>
+                <span>电话</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot wechat"></span>
+                <span>微信</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-header">
+            <span class="card-title"><i class="fas fa-expand"></i> 网络扩展</span>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            输入目标 ID，加载其 N 度关系网络
+          </p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">目标 ID</label>
+              <input type="text" id="expand-target" class="form-control" placeholder="如: 13800138001"
+                style="width: 180px;">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">扩展深度</label>
+              <select id="expand-depth" class="form-control form-select" style="width: 100px;">
+                <option value="1">1 度</option>
+                <option value="2" selected>2 度</option>
+                <option value="3">3 度</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">节点类型</label>
+              <select id="expand-node-type" class="form-control form-select" style="width: 120px;">
+                <option value="Phone">电话</option>
+                <option value="WeChat">微信</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.expandNetwork()">
+              <i class="fas fa-project-diagram"></i> 加载网络
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 研判工具 ========== -->
+      <div id="page-analysis" class="page">
+        <div class="page-header">
+          <h1 class="page-title">研判分析工具</h1>
+          <p class="page-subtitle">智能图分析算法，助力情报研判</p>
+        </div>
+
+        <!-- 🎯 目标分析（核心功能） -->
+        <div class="card"
+          style="margin-bottom: 24px; border: 2px solid var(--accent-primary); background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+          <div class="card-header" style="border-bottom: 1px solid var(--accent-primary);">
+            <span class="card-title" style="font-size: 1.2rem;">
+              <i class="fas fa-crosshairs" style="color: var(--accent-primary);"></i>
+              🎯 目标关系分析
+            </span>
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            输入一个<strong>电话号码</strong>，系统自动查找与此号码相关的所有人和关系，并生成可视化关系图谱。
+          </p>
+
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 200px; margin: 0;">
+              <label class="form-label">目标电话号码</label>
+              <input type="text" id="target-number-input" class="form-control" placeholder="输入要查询的电话号码，如: 13800138001"
+                onkeypress="if(event.key==='Enter') analysisModule.analyzeTarget()">
+            </div>
+          </div>
+
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+              <i class="fas fa-user-friends" style="color: var(--accent-success); font-size: 24px;"></i>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 8px 0 0 0;">谁的通讯录里有此号码</p>
+            </div>
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+              <i class="fas fa-share-alt" style="color: var(--accent-warning); font-size: 24px;"></i>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 8px 0 0 0;">这些人之间有什么关联</p>
+            </div>
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; text-align: center;">
+              <i class="fas fa-project-diagram" style="color: var(--accent-primary); font-size: 24px;"></i>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 8px 0 0 0;">生成关系图谱</p>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;"
+            onclick="analysisModule.analyzeTarget()">
+            <i class="fas fa-search"></i> 开始分析并出图
+          </button>
+          <div id="target-analysis-result" style="margin-top: 16px;"></div>
+        </div>
+
+        <h3 style="margin-bottom: 16px; color: var(--text-secondary);"><i class="fas fa-tools"></i> 手动分析工具</h3>
+
+        <div class="analysis-grid">
+
+          <!-- 共同联系人 -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <i class="fas fa-users"></i>
+              <h4>共同联系人分析</h4>
+            </div>
+            <p>查找两个目标的共同联系人及联系强度</p>
+            <div class="form-group">
+              <input type="text" id="common-target-a" class="form-control" placeholder="目标 A (如: 13800138001)">
+            </div>
+            <div class="form-group">
+              <input type="text" id="common-target-b" class="form-control" placeholder="目标 B (如: 13800138002)">
+            </div>
+            <div class="form-group">
+              <select id="common-node-type" class="form-control form-select">
+                <option value="Phone">电话</option>
+                <option value="WeChat">微信</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.commonContacts()">
+              <i class="fas fa-search"></i> 开始分析
+            </button>
+            <div id="common-contacts-result" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- 最短路径 -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <i class="fas fa-route"></i>
+              <h4>最短路径查询</h4>
+            </div>
+            <p>分析两个目标之间的关联路径</p>
+            <div class="form-group">
+              <input type="text" id="path-source" class="form-control" placeholder="起点 ID">
+            </div>
+            <div class="form-group">
+              <input type="text" id="path-target" class="form-control" placeholder="终点 ID">
+            </div>
+            <div class="form-group">
+              <input type="number" id="path-max-depth" class="form-control" placeholder="最大深度" value="5" min="1"
+                max="10">
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.shortestPath()">
+              <i class="fas fa-search"></i> 查询路径
+            </button>
+            <div id="path-result" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- 频繁联系 -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <i class="fas fa-phone-volume"></i>
+              <h4>频繁联系分析</h4>
+            </div>
+            <p>查找某个目标的高频联系人</p>
+            <div class="form-group">
+              <input type="text" id="frequent-target" class="form-control" placeholder="目标 ID">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div class="form-group" style="flex: 1;">
+                <select id="frequent-node-type" class="form-control form-select">
+                  <option value="Phone">电话</option>
+                  <option value="WeChat">微信</option>
+                </select>
+              </div>
+              <div class="form-group" style="width: 80px;">
+                <input type="number" id="frequent-top-n" class="form-control" value="10" min="1" max="50">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.frequentContacts()">
+              <i class="fas fa-search"></i> 分析
+            </button>
+            <div id="frequent-contacts-result" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- 中心节点 -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <i class="fas fa-star"></i>
+              <h4>中心节点分析</h4>
+            </div>
+            <p>基于度中心性识别网络中的关键节点</p>
+            <div style="display: flex; gap: 8px;">
+              <div class="form-group" style="flex: 1;">
+                <select id="central-node-type" class="form-control form-select">
+                  <option value="Phone">电话</option>
+                  <option value="WeChat">微信</option>
+                </select>
+              </div>
+              <div class="form-group" style="width: 80px;">
+                <input type="number" id="central-top-n" class="form-control" value="10" min="1" max="50">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.centralNodes()">
+              <i class="fas fa-search"></i> 查找中心节点
+            </button>
+            <div id="central-nodes-result" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- 社区发现 -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <i class="fas fa-users-cog"></i>
+              <h4>社区发现（团伙挖掘）</h4>
+            </div>
+            <p>识别紧密联系的群组，挖掘潜在团伙</p>
+            <div style="display: flex; gap: 8px;">
+              <div class="form-group" style="flex: 1;">
+                <select id="community-node-type" class="form-control form-select">
+                  <option value="Phone">电话</option>
+                  <option value="WeChat">微信</option>
+                </select>
+              </div>
+              <div class="form-group" style="width: 100px;">
+                <input type="number" id="community-min-size" class="form-control" value="3" min="2" max="20"
+                  placeholder="最小人数">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.communities()">
+              <i class="fas fa-search"></i> 发现社区
+            </button>
+            <div id="communities-result" style="margin-top: 16px;"></div>
+          </div>
+
+          <!-- 通话模式 -->
+          <div class="analysis-card">
+            <div class="analysis-card-header">
+              <i class="fas fa-chart-line"></i>
+              <h4>通话模式分析</h4>
+            </div>
+            <p>分析目标的通话时间分布和统计特征</p>
+            <div class="form-group">
+              <input type="text" id="pattern-target" class="form-control" placeholder="目标电话号码">
+            </div>
+            <div class="form-group">
+              <input type="number" id="pattern-days" class="form-control" value="30" min="1" max="365"
+                placeholder="时间窗口（天）">
+            </div>
+            <button class="btn btn-primary" onclick="analysisModule.callPattern()">
+              <i class="fas fa-chart-bar"></i> 分析模式
+            </button>
+            <div id="call-pattern-result" style="margin-top: 16px;"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="js/api.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

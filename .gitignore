@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Ide
+.vscode/
+.idea/
+
+# System
+thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific
+data/
+uploads/
+mock_people_books/
+*.log
+neo4j_data/
+neo4j_import/
+neo4j_plugins/

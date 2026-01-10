@@ -1,0 +1,8 @@
+user,friend,nickname
+wx_alice,wx_bob,小王
+wx_alice,wx_charlie,老张
+wx_bob,wx_charlie,张三
+wx_bob,wx_david,李四
+wx_charlie,wx_david,David
+wx_david,wx_eve,Eve
+wx_alice,wx_eve,小李
