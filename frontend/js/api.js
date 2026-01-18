@@ -3,7 +3,7 @@
  * 封装与后端 API 的所有交互
  */
 
-const API_BASE = 'http://localhost:8011';
+const API_BASE = window.config ? window.config.API_BASE : 'http://localhost:8011';
 
 const api = {
     /**

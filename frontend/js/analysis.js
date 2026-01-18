@@ -53,7 +53,7 @@ const analysisModule = {
         <div class="empty-state" style="padding: 20px;">
           <i class="fas fa-search"></i>
           <h4>未找到相关数据</h4>
-          <p>号码 <strong>${summary.target}</strong> 在系统中没有找到关联关系。<br>请确认号码正确，或先导入相关数据。</p>
+          <p>号码 <strong>${utils.escapeHtml(summary.target)}</strong> 在系统中没有找到关联关系。<br>请确认号码正确，或先导入相关数据。</p>
         </div>
       `;
       return;
@@ -73,7 +73,7 @@ const analysisModule = {
         
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
           <div style="text-align: center;">
-            <div style="font-size: 20px; font-weight: bold; color: var(--accent-primary);">${summary.target_name || '未知'}</div>
+            <div style="font-size: 20px; font-weight: bold; color: var(--accent-primary);">${utils.escapeHtml(summary.target_name) || '未知'}</div>
             <div style="font-size: 12px; color: var(--text-muted);">目标姓名</div>
           </div>
           <div style="text-align: center;">
@@ -93,7 +93,7 @@ const analysisModule = {
         ${result.owners && result.owners.length > 0 ? `
           <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
             <strong>在以下人的通讯录中：</strong>
-            <span style="color: var(--accent-success);">${result.owners.join('、')}</span>
+            <span style="color: var(--accent-success);">${result.owners.map(o => utils.escapeHtml(o)).join('、')}</span>
           </div>
         ` : ''}
       </div>
@@ -209,9 +209,9 @@ const analysisModule = {
       result.common_contacts.slice(0, 10).forEach(item => {
         html += `
                     <tr>
-                        <td>${item.person1}</td>
-                        <td>${item.person2}</td>
-                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${(item.common_phones || []).slice(0, 3).join(', ')}${item.common_phones?.length > 3 ? '...' : ''}</td>
+                        <td>${utils.escapeHtml(item.person1)}</td>
+                        <td>${utils.escapeHtml(item.person2)}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${(item.common_phones || []).slice(0, 3).map(p => utils.escapeHtml(p)).join(', ')}${item.common_phones?.length > 3 ? '...' : ''}</td>
                         <td><span class="badge badge-success">${item.common_count}</span></td>
                     </tr>
                 `;
@@ -233,10 +233,10 @@ const analysisModule = {
       result.hot_numbers.slice(0, 10).forEach(item => {
         html += `
                     <tr>
-                        <td><strong>${item.number}</strong></td>
-                        <td>${item.name || '-'}</td>
+                        <td><strong>${utils.escapeHtml(item.number)}</strong></td>
+                        <td>${utils.escapeHtml(item.name) || '-'}</td>
                         <td><span class="badge badge-warning">${item.owner_count} 人</span></td>
-                        <td>${(item.owners || []).join(', ')}</td>
+                        <td>${(item.owners || []).map(o => utils.escapeHtml(o)).join(', ')}</td>
                     </tr>
                 `;
       });
@@ -258,8 +258,8 @@ const analysisModule = {
         const strengthColor = item.relation_strength === '强' ? 'danger' : (item.relation_strength === '中' ? 'warning' : 'secondary');
         html += `
                     <tr>
-                        <td>${item.person1}</td>
-                        <td>${item.person2}</td>
+                        <td>${utils.escapeHtml(item.person1)}</td>
+                        <td>${utils.escapeHtml(item.person2)}</td>
                         <td>${item.shared_contacts}</td>
                         <td><span class="badge badge-${strengthColor}">${item.relation_strength}</span></td>
                     </tr>
@@ -319,7 +319,7 @@ const analysisModule = {
         <div class="empty-state">
           <i class="fas fa-users-slash"></i>
           <h4>未找到共同联系人</h4>
-          <p>${result.target_a} 和 ${result.target_b} 没有共同的联系人</p>
+          <p>${utils.escapeHtml(result.target_a)} 和 ${utils.escapeHtml(result.target_b)} 没有共同的联系人</p>
         </div>
       `;
       return;
@@ -343,9 +343,9 @@ const analysisModule = {
     result.common_contacts.forEach(contact => {
       html += `
         <tr>
-          <td>${contact.common_id}</td>
-          <td><span class="badge badge-${contact.type === 'Phone' ? 'warning' : 'success'}">${contact.type}</span></td>
-          <td>${contact.contact_strength || '-'}</td>
+          <td>${utils.escapeHtml(contact.common_id)}</td>
+          <td><span class="badge badge-${contact.type === 'Phone' ? 'warning' : 'success'}">${utils.escapeHtml(contact.type)}</span></td>
+          <td>${utils.escapeHtml(contact.contact_strength) || '-'}</td>
         </tr>
       `;
     });
@@ -400,7 +400,7 @@ const analysisModule = {
         <span class="badge badge-primary">路径长度: ${result.path.length - 1}</span>
       </div>
       <div class="path-display">
-        <p style="font-size: 1.1rem; word-break: break-all;">${pathStr}</p>
+        <p style="font-size: 1.1rem; word-break: break-all;">${utils.escapeHtml(pathStr)}</p>
       </div>
       <button class="btn btn-secondary" onclick="analysisModule.highlightPathOnGraph('${result.path.join(',')}')">
         <i class="fas fa-eye"></i> 在图谱中显示
@@ -448,7 +448,7 @@ const analysisModule = {
         <div class="empty-state">
           <i class="fas fa-phone-slash"></i>
           <h4>暂无通话记录</h4>
-          <p>未找到 ${result.target} 的联系记录</p>
+          <p>未找到 ${utils.escapeHtml(result.target)} 的联系记录</p>
         </div>
       `;
       return;
@@ -474,7 +474,7 @@ const analysisModule = {
       html += `
         <tr>
           <td>${index + 1}</td>
-          <td>${contact.contact_id}</td>
+          <td>${utils.escapeHtml(contact.contact_id)}</td>
           <td>${contact.call_count || contact.count || '-'}</td>
           <td>${contact.total_duration || '-'}</td>
         </tr>
@@ -538,7 +538,7 @@ const analysisModule = {
       html += `
         <tr>
           <td>${index + 1}</td>
-          <td>${node.id || node.node_id}</td>
+          <td>${utils.escapeHtml(node.id || node.node_id)}</td>
           <td>${node.degree || node.connection_count || '-'}</td>
         </tr>
       `;
@@ -596,7 +596,7 @@ const analysisModule = {
         <div class="card" style="margin-top: 12px; padding: 12px;">
           <h5>社区 ${index + 1} <span class="badge badge-success">${community.members.length} 人</span></h5>
           <p style="font-size: 0.85rem; color: var(--text-secondary); word-break: break-all;">
-            ${community.members.join(', ')}
+            ${community.members.map(m => utils.escapeHtml(m)).join(', ')}
           </p>
         </div>
       `;

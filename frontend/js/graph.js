@@ -200,24 +200,25 @@ const graphModule = {
             const result = await api.expandNetwork(targetId, depth, nodeType);
 
             if (result.nodes && result.nodes.length > 0) {
-                result.nodes.forEach(node => {
-                    this.addNode(
-                        node.id || node.number || node.wxid,
-                        node.id || node.number || node.wxid,
-                        node.type || nodeType
-                    );
-                });
+                const newNodes = result.nodes.map(node => ({
+                    id: node.id || node.number || node.wxid,
+                    label: node.id || node.number || node.wxid,
+                    title: `${node.type || nodeType}: ${node.id || node.number || node.wxid}`,
+                    color: this.getNodeColor(node.type || nodeType),
+                    nodeType: node.type || nodeType
+                }));
+                this.nodes.add(newNodes);
             }
 
             if (result.relationships && result.relationships.length > 0) {
-                result.relationships.forEach(rel => {
-                    this.addEdge(
-                        rel.source || rel.from,
-                        rel.target || rel.to,
-                        rel.type || '',
-                        { count: rel.count, duration: rel.total_duration }
-                    );
-                });
+                const newEdges = result.relationships.map(rel => ({
+                    from: rel.source || rel.from,
+                    to: rel.target || rel.to,
+                    label: rel.type || '',
+                    title: rel.type || '',
+                    properties: { count: rel.count, duration: rel.total_duration }
+                }));
+                this.edges.add(newEdges);
             }
 
             // 如果没有数据从expandNetwork，尝试从统计接口构建
@@ -417,11 +418,10 @@ const graphModule = {
             'Phone': { background: '#ffd166', border: '#f5a623', font: '#333' }
         };
 
-        // 添加节点
-        result.nodes.forEach(node => {
+        // 批量添加节点
+        const newNodes = result.nodes.map(node => {
             const nodeColor = colors[node.type] || colors['Phone'];
-
-            this.nodes.add({
+            return {
                 id: node.id,
                 label: node.label,
                 title: `${node.type}: ${node.label}${node.number ? '\n号码: ' + node.number : ''}`,
@@ -433,11 +433,12 @@ const graphModule = {
                 font: { color: nodeColor.font, size: node.type === 'Target' ? 16 : 12 },
                 size: node.size || 25,
                 nodeType: node.type
-            });
+            };
         });
+        this.nodes.add(newNodes);
 
-        // 添加边
-        result.edges.forEach((edge, index) => {
+        // 批量添加边
+        const newEdges = result.edges.map((edge, index) => {
             let edgeStyle = {
                 color: '#64748b',
                 width: 1.5,
@@ -457,7 +458,7 @@ const graphModule = {
                 };
             }
 
-            this.edges.add({
+            return {
                 id: `edge_${index}`,
                 from: edge.from,
                 to: edge.to,
@@ -466,8 +467,9 @@ const graphModule = {
                 width: edgeStyle.width,
                 dashes: edgeStyle.dashes,
                 title: edge.label || ''
-            });
+            };
         });
+        this.edges.add(newEdges);
 
         this.fit();
         this.showTargetLegend();
@@ -536,10 +538,14 @@ const graphModule = {
             });
         }
 
+        // 准备批量添加的数组
+        const newNodes = [];
+        const newEdges = [];
+
         // 添加人物节点
         persons.forEach(person => {
             const color = getPersonColor(person);
-            this.nodes.add({
+            newNodes.push({
                 id: `person_${person}`,
                 label: person,
                 title: `人物: ${person}`,
@@ -560,7 +566,7 @@ const graphModule = {
                 const nodeId = `phone_${item.number}`;
 
                 // 添加电话节点
-                this.nodes.add({
+                newNodes.push({
                     id: nodeId,
                     label: item.name || item.number,
                     title: `电话: ${item.number}\n姓名: ${item.name || '未知'}\n被 ${item.owner_count} 人联系`,
@@ -575,7 +581,7 @@ const graphModule = {
 
                 // 添加从人物到电话的边
                 (item.owners || []).forEach(owner => {
-                    this.edges.add({
+                    newEdges.push({
                         from: `person_${owner}`,
                         to: nodeId,
                         label: 'HAS_CONTACT',
@@ -594,7 +600,7 @@ const graphModule = {
                 const width = item.relation_strength === '强' ? 4 :
                     (item.relation_strength === '中' ? 2.5 : 1.5);
 
-                this.edges.add({
+                newEdges.push({
                     from: `person_${item.person1}`,
                     to: `person_${item.person2}`,
                     label: `${item.shared_contacts} 个共同联系人`,
@@ -605,6 +611,9 @@ const graphModule = {
                 });
             });
         }
+
+        this.nodes.add(newNodes);
+        this.edges.add(newEdges);
 
         this.fit();
 
